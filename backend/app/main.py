@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from backend.app.api.evidence_routes import router as evidence_router
 from backend.app.api.routes import router
 from backend.app.core.config import settings
 
@@ -49,6 +50,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
     )
 
 app.include_router(router)
+app.include_router(evidence_router)
 
 
 @app.get("/", tags=["Root"])

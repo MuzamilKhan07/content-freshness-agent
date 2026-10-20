@@ -4,14 +4,15 @@ import {
   LayoutDashboard,
   FileSpreadsheet,
   ShieldAlert,
+  Cpu,
   GitCompare,
   Wrench,
   Settings,
 } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'inventory' | 'audit';
-  onSelectTab: (tab: 'dashboard' | 'inventory' | 'audit') => void;
+  activeTab: 'dashboard' | 'inventory' | 'audit' | 'evidence';
+  onSelectTab: (tab: 'dashboard' | 'inventory' | 'audit' | 'evidence') => void;
   totalRecords?: number;
 }
 
@@ -81,6 +82,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }}
           >
             Phase 3
+          </span>
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'evidence' ? 'active' : ''}`}
+          id="nav-evidence"
+          onClick={() => onSelectTab('evidence')}
+        >
+          <div className="nav-item-left">
+            <Cpu size={18} />
+            <span>Evidence Agent</span>
+          </div>
+          <span
+            className="card-badge"
+            style={{
+              backgroundColor: activeTab === 'evidence' ? 'rgba(255,255,255,0.2)' : 'var(--primary-50)',
+              color: activeTab === 'evidence' ? '#ffffff' : 'var(--primary-600)',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+            }}
+          >
+            Phase 4
           </span>
         </button>
 

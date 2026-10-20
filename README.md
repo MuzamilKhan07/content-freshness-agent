@@ -123,6 +123,32 @@ npm run dev
 | `GET` | `/api/audit/documents` | Prioritized remediation queue with search, risk level, min/max score filters |
 | `GET` | `/api/audit/documents/{document_id}` | Full scoring explanation: formula, signal breakdown, and recommended action |
 | `POST` | `/api/audit/run` | Execute/re-run deterministic freshness audit against loaded records |
+| `POST` | `/api/evidence/audit` | Start evidence audit with selectable tools, doc IDs, and limits |
+| `GET` | `/api/evidence/summary` | Summary of inspected docs, checks attempted, confirmed/suspected/unknown/failed counts |
+| `GET` | `/api/evidence/documents/{document_id}` | Detailed evidence items associated with a specific document |
+| `GET` | `/api/evidence/findings` | Paginated evidence findings with status, signal type, severity, and doc ID filters |
+| `GET` | `/api/evidence/audits/{audit_id}` | Real execution status, timestamps, and parameters of a specific audit |
+
+---
+
+## Phase 4: Evidence Collection Agent & Content Verification
+
+The **Evidence Collection Agent** is a multi-tool agentic workflow that gathers, validates, normalizes, and records traceable evidence about potentially stale knowledge-base documents:
+
+1. **Metadata Inspection Tool**: Inspects identifiers, dates, platforms, URL fields, and broken-link / deprecated-reference indicators.
+2. **Safe URL Verification Tool**:
+   - Accepts only HTTP/HTTPS public destinations.
+   - Comprehensive SSRF validation: rejects loopback (`127.0.0.0/8`), private RFC1918 subnets, link-local, and cloud metadata endpoints (`169.254.169.254`).
+   - Re-validates destinations on redirects.
+   - HEAD request with controlled GET fallback, streaming response size guard (max 64KB), and bounded connection/read timeouts.
+   - Honestly flags missing URLs as `unknown` rather than declaring documents link-free.
+3. **Deprecated-Reference Detection Tool**:
+   - Rule-based detection using token word boundaries (`\b`) across document titles, text, and metadata.
+   - Pre-configured with 10 enterprise deprecation patterns (Skype for Business, HipChat, IE11, AngularJS, CentOS 7/8, Python 2, SVN, Adobe Flash, TFS, Confluence Server).
+4. **Metadata Quality Tool**:
+   - Identifies missing dates, invalid dates, missing identifiers, and missing platforms.
+5. **Phase 3 Scoring Integration**:
+   - Direct feedback loop: verified evidence triggers an automatic score refresh in the Phase 3 scoring engine without inventing data.
 
 ---
 
@@ -132,12 +158,17 @@ npm run dev
 .\.venv\Scripts\Activate.ps1
 pytest -v
 ```
-All 24 automated tests cover Phase 1, Phase 2, and Phase 3 functionality:
+All **36 automated tests** cover Phases 1–4 functionality:
 - Age thresholds (&le;30, 31–90, 91–180, 181–365, >365 days).
 - Broken link scoring (clean, confirmed, missing).
 - Deprecated tool scoring (clean, confirmed, missing).
 - Contradiction and view trend unknown handling.
 - Provisional score normalization and evidence coverage.
 - Priority rank ordering (1 to 6).
-- Zero records and missing data resilience.
+- SSRF prevention (loopback, private subnets, cloud metadata).
+- Safe public URL verification and redirect security.
+- Deprecated tool regex rules and false-positive boundaries.
+- Metadata quality checks and schema inconsistency detection.
+- Batch audit execution and error isolation (single doc failures don't crash batch).
 - Security checks confirming zero exposed API keys.
+

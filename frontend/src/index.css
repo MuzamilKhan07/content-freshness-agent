@@ -1183,3 +1183,74 @@ body {
   line-height: 1.4;
 }
 
+/* Phase 4 Evidence Collection & Findings Styles */
+.evidence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+
+.evidence-badge.status-confirmed {
+  background-color: var(--rose-50);
+  color: var(--rose-600);
+  border: 1px solid var(--rose-border);
+}
+
+.evidence-badge.status-suspected {
+  background-color: var(--amber-50);
+  color: var(--amber-600);
+  border: 1px solid var(--amber-border);
+}
+
+.evidence-badge.status-unknown {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+.evidence-badge.status-failed {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.evidence-badge.status-na {
+  background-color: #f8fafc;
+  color: #94a3b8;
+  border: 1px solid #e2e8f0;
+}
+
+.evidence-badge.severity-critical {
+  background-color: #ffe4e6;
+  color: #9f1239;
+  font-weight: 700;
+}
+
+.evidence-badge.severity-high {
+  background-color: #ffedd5;
+  color: #9a3412;
+  font-weight: 700;
+}
+
+.evidence-badge.severity-moderate {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.evidence-badge.severity-low {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.evidence-badge.severity-info {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+

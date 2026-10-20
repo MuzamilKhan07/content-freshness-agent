@@ -4,6 +4,7 @@ import { TopBar } from '../components/TopBar';
 import { DashboardOverview } from '../components/DashboardOverview';
 import { ContentInventory } from '../components/ContentInventory';
 import { AuditFindings } from '../components/AuditFindings';
+import { EvidenceFindings } from '../components/EvidenceFindings';
 import { DocumentDetailDrawer } from '../components/DocumentDetailDrawer';
 import { ScoreDetailDrawer } from '../components/ScoreDetailDrawer';
 import {
@@ -11,6 +12,7 @@ import {
   fetchDatasetStatus,
   fetchDashboardSummary,
   fetchDashboardDistributions,
+  fetchAuditDocumentDetail,
 } from '../services/api';
 import {
   HealthResponse,
@@ -22,7 +24,7 @@ import {
 } from '../types';
 
 export const DashboardPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'audit'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'audit' | 'evidence'>('dashboard');
   const [selectedDocument, setSelectedDocument] = useState<DocumentRecord | null>(null);
   const [selectedScoredDocument, setSelectedScoredDocument] = useState<ScoredDocument | null>(null);
 
@@ -108,9 +110,21 @@ export const DashboardPage: React.FC = () => {
               availablePlatforms={summary?.platforms_list || []}
               availableContentTypes={summary?.content_types_list || []}
             />
-          ) : (
+          ) : activeTab === 'audit' ? (
             <AuditFindings
               onSelectScoredDocument={(scoredDoc) => setSelectedScoredDocument(scoredDoc)}
+            />
+          ) : (
+            <EvidenceFindings
+              onSelectScoredDocument={(scoredDoc) => setSelectedScoredDocument(scoredDoc)}
+              onSelectDocumentId={async (docId) => {
+                try {
+                  const detail = await fetchAuditDocumentDetail(docId);
+                  setSelectedScoredDocument(detail);
+                } catch (e) {
+                  console.error('Failed to open document detail:', e);
+                }
+              }}
             />
           )}
         </main>

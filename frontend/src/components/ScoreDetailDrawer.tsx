@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   X,
   HelpCircle,
@@ -7,8 +7,12 @@ import {
   AlertTriangle,
   GitCompare,
   TrendingDown,
+  CheckCircle2,
+  XCircle,
+  Cpu,
 } from 'lucide-react';
-import { ScoredDocument } from '../types';
+import { ScoredDocument, EvidenceItem } from '../types';
+import { fetchDocumentEvidence } from '../services/api';
 
 interface ScoreDetailDrawerProps {
   document: ScoredDocument | null;
@@ -19,6 +23,9 @@ export const ScoreDetailDrawer: React.FC<ScoreDetailDrawerProps> = ({
   document,
   onClose,
 }) => {
+  const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
+  const [loadingEvidence, setLoadingEvidence] = useState<boolean>(false);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -26,6 +33,25 @@ export const ScoreDetailDrawer: React.FC<ScoreDetailDrawerProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
+
+  useEffect(() => {
+    if (document) {
+      setLoadingEvidence(true);
+      fetchDocumentEvidence(document.content_id)
+        .then((res) => {
+          setEvidenceItems(res.evidence_items || []);
+        })
+        .catch((err) => {
+          console.error('Failed to load evidence items for document:', err);
+          setEvidenceItems([]);
+        })
+        .finally(() => {
+          setLoadingEvidence(false);
+        });
+    } else {
+      setEvidenceItems([]);
+    }
+  }, [document]);
 
   if (!document) return null;
 
@@ -238,6 +264,73 @@ export const ScoreDetailDrawer: React.FC<ScoreDetailDrawerProps> = ({
             >
               <strong>Next Action:</strong> {document.recommended_action}
             </div>
+          </div>
+
+          {/* Phase 4 Agent Evidence Findings */}
+          <div className="detail-section">
+            <div className="detail-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Cpu size={15} color="var(--primary-600)" />
+                <span>Agent Evidence Provenance (Phase 4)</span>
+              </div>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                {evidenceItems.length} record(s)
+              </span>
+            </div>
+
+            {loadingEvidence ? (
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', padding: '12px 0' }}>
+                Loading agent evidence findings...
+              </div>
+            ) : evidenceItems.length === 0 ? (
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', padding: '10px 14px', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)' }}>
+                No active evidence findings recorded yet for this document. Run an evidence audit to generate verifiable findings.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {evidenceItems.map((ev) => (
+                  <div
+                    key={ev.evidence_id}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-subtle)',
+                      backgroundColor: ev.status === 'confirmed' ? '#fff1f2' : ev.status === 'suspected' ? '#fffbeb' : '#f8fafc',
+                      fontSize: '0.8rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span className={`evidence-badge status-${ev.status}`}>
+                          {ev.status === 'confirmed' ? <CheckCircle2 size={12} /> : ev.status === 'failed' ? <XCircle size={12} /> : <HelpCircle size={12} />}
+                          {ev.status}
+                        </span>
+                        <span className={`evidence-badge severity-${ev.severity}`}>{ev.severity}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', textTransform: 'capitalize' }}>
+                          {ev.signal_type.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                      <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        {ev.tool_name}
+                      </span>
+                    </div>
+
+                    <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginTop: 2 }}>
+                      {ev.summary}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                      <span>Source: <code className="mono">{ev.source_field}</code></span>
+                      {ev.observed_value && <span>Observed: <code className="mono">{ev.observed_value}</code></span>}
+                    </div>
+
+                    <div style={{ marginTop: 4, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      <strong>Action:</strong> {ev.recommended_action}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Comparison with CSV Baseline */}

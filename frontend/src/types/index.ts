@@ -181,3 +181,81 @@ export interface AuditQueryParams {
   sort_order?: 'asc' | 'desc';
   evidence_status?: string;
 }
+
+// ---------------------------------------------------------
+// Phase 4 Evidence Collection Models
+// ---------------------------------------------------------
+
+export type EvidenceStatusType = 'confirmed' | 'suspected' | 'unknown' | 'failed' | 'not_applicable';
+export type EvidenceSeverityType = 'critical' | 'high' | 'moderate' | 'low' | 'info';
+export type EvidenceSignalType =
+  | 'document_age'
+  | 'broken_links'
+  | 'deprecated_tools'
+  | 'metadata_quality'
+  | 'url_verification'
+  | 'contradictions';
+
+export interface EvidenceItem {
+  evidence_id: string;
+  document_id: string;
+  signal_type: EvidenceSignalType;
+  status: EvidenceStatusType;
+  severity: EvidenceSeverityType;
+  summary: string;
+  source_field: string;
+  observed_value?: string | null;
+  evidence_reference?: string | null;
+  detected_at: string;
+  tool_name: string;
+  confidence: number;
+  recommended_action: string;
+}
+
+export interface EvidenceAuditRequest {
+  document_ids?: string[];
+  max_documents?: number;
+  enabled_checks?: string[];
+  custom_urls?: Record<string, string>;
+}
+
+export interface EvidenceSummaryResponse {
+  documents_inspected: number;
+  checks_attempted: number;
+  confirmed_findings: number;
+  suspected_findings: number;
+  unknown_signals: number;
+  failed_checks: number;
+  broken_link_findings: number;
+  deprecated_reference_findings: number;
+  metadata_quality_findings: number;
+  audit_start_timestamp: string;
+  audit_completed_timestamp: string;
+}
+
+export interface EvidenceDocumentResponse {
+  document_id: string;
+  title: string;
+  evidence_count: number;
+  evidence_items: EvidenceItem[];
+}
+
+export interface EvidenceFindingListResponse {
+  items: EvidenceItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface EvidenceAuditRecord {
+  audit_id: string;
+  status: string;
+  start_time: string;
+  completion_time: string;
+  document_ids: string[];
+  checks_performed: string[];
+  summary: EvidenceSummaryResponse;
+  total_evidence_produced: number;
+}
+

@@ -2,7 +2,7 @@ import React from 'react';
 import { RefreshCw, Server, AlertCircle } from 'lucide-react';
 
 interface TopBarProps {
-  activeTab: 'dashboard' | 'inventory' | 'audit';
+  activeTab: 'dashboard' | 'inventory' | 'audit' | 'evidence';
   backendOnline: boolean | null;
   isRefreshing: boolean;
   onRefresh: () => void;
@@ -32,6 +32,11 @@ export const TopBar: React.FC<TopBarProps> = ({
         return {
           title: 'Audit Findings & Risk Prioritization',
           subtitle: 'Explainable freshness-risk scores (0–100) and deterministic remediation queue',
+        };
+      case 'evidence':
+        return {
+          title: 'Evidence Collection Agent & Content Verification',
+          subtitle: 'Autonomous verification agent collecting traceable, SSRF-safe signals and updating risk scores',
         };
     }
   };

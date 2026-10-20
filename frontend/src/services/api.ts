@@ -11,6 +11,11 @@ import {
   ScoredDocument,
   AuditRunResponse,
   AuditQueryParams,
+  EvidenceAuditRequest,
+  EvidenceSummaryResponse,
+  EvidenceDocumentResponse,
+  EvidenceFindingListResponse,
+  EvidenceAuditRecord,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -131,3 +136,74 @@ export async function triggerAuditRun(): Promise<AuditRunResponse> {
   }
   return response.json();
 }
+
+// ---------------------------------------------------------
+// Phase 4 Evidence Collection API
+// ---------------------------------------------------------
+
+export async function fetchEvidenceSummary(): Promise<EvidenceSummaryResponse> {
+  const response = await fetch(`${API_BASE_URL}/evidence/summary`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch evidence summary: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchEvidenceFindings(params: {
+  page?: number;
+  page_size?: number;
+  status?: string;
+  signal_type?: string;
+  document_id?: string;
+  severity?: string;
+} = {}): Promise<EvidenceFindingListResponse> {
+  const url = new URL(`${window.location.origin}${API_BASE_URL}/evidence/findings`);
+  if (params.page !== undefined) url.searchParams.set('page', String(params.page));
+  if (params.page_size !== undefined) url.searchParams.set('page_size', String(params.page_size));
+  if (params.status && params.status !== 'all') url.searchParams.set('status', params.status);
+  if (params.signal_type && params.signal_type !== 'all') url.searchParams.set('signal_type', params.signal_type);
+  if (params.document_id) url.searchParams.set('document_id', params.document_id);
+  if (params.severity && params.severity !== 'all') url.searchParams.set('severity', params.severity);
+
+  const response = await fetch(url.toString());
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch evidence findings: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchDocumentEvidence(documentId: string): Promise<EvidenceDocumentResponse> {
+  const encodedId = encodeURIComponent(documentId.trim());
+  const response = await fetch(`${API_BASE_URL}/evidence/documents/${encodedId}`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch evidence for document ${documentId}: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function triggerEvidenceAudit(request: EvidenceAuditRequest = {}): Promise<EvidenceAuditRecord> {
+  const response = await fetch(`${API_BASE_URL}/evidence/audit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Evidence audit failed: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchEvidenceAuditRecord(auditId: string): Promise<EvidenceAuditRecord> {
+  const encodedId = encodeURIComponent(auditId.trim());
+  const response = await fetch(`${API_BASE_URL}/evidence/audits/${encodedId}`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Audit record not found: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
