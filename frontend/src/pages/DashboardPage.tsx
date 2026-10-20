@@ -3,7 +3,9 @@ import { Sidebar } from '../components/Sidebar';
 import { TopBar } from '../components/TopBar';
 import { DashboardOverview } from '../components/DashboardOverview';
 import { ContentInventory } from '../components/ContentInventory';
+import { AuditFindings } from '../components/AuditFindings';
 import { DocumentDetailDrawer } from '../components/DocumentDetailDrawer';
+import { ScoreDetailDrawer } from '../components/ScoreDetailDrawer';
 import {
   fetchHealth,
   fetchDatasetStatus,
@@ -16,11 +18,13 @@ import {
   DashboardSummaryResponse,
   DashboardDistributionsResponse,
   DocumentRecord,
+  ScoredDocument,
 } from '../types';
 
 export const DashboardPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'audit'>('dashboard');
   const [selectedDocument, setSelectedDocument] = useState<DocumentRecord | null>(null);
+  const [selectedScoredDocument, setSelectedScoredDocument] = useState<ScoredDocument | null>(null);
 
   // High-level metrics
   const [_health, setHealth] = useState<HealthResponse | null>(null);
@@ -98,20 +102,30 @@ export const DashboardPage: React.FC = () => {
               loading={loading && !summary}
               onNavigateToInventory={() => setActiveTab('inventory')}
             />
-          ) : (
+          ) : activeTab === 'inventory' ? (
             <ContentInventory
               onSelectDocument={(doc) => setSelectedDocument(doc)}
               availablePlatforms={summary?.platforms_list || []}
               availableContentTypes={summary?.content_types_list || []}
             />
+          ) : (
+            <AuditFindings
+              onSelectScoredDocument={(scoredDoc) => setSelectedScoredDocument(scoredDoc)}
+            />
           )}
         </main>
       </div>
 
-      {/* Slide-over Document Detail Drawer */}
+      {/* Slide-over Document Detail Drawer (Inventory View) */}
       <DocumentDetailDrawer
         document={selectedDocument}
         onClose={() => setSelectedDocument(null)}
+      />
+
+      {/* Slide-over Score Detail Drawer (Phase 3 Audit View) */}
+      <ScoreDetailDrawer
+        document={selectedScoredDocument}
+        onClose={() => setSelectedScoredDocument(null)}
       />
     </div>
   );

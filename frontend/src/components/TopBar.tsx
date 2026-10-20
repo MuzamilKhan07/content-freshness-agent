@@ -2,7 +2,7 @@ import React from 'react';
 import { RefreshCw, Server, AlertCircle } from 'lucide-react';
 
 interface TopBarProps {
-  activeTab: 'dashboard' | 'inventory';
+  activeTab: 'dashboard' | 'inventory' | 'audit';
   backendOnline: boolean | null;
   isRefreshing: boolean;
   onRefresh: () => void;
@@ -16,15 +16,33 @@ export const TopBar: React.FC<TopBarProps> = ({
   onRefresh,
   lastChecked,
 }) => {
+  const getTitles = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return {
+          title: 'Knowledge Health Dashboard',
+          subtitle: 'Real-time KPI metrics and knowledge distribution derived from enterprise inventory',
+        };
+      case 'inventory':
+        return {
+          title: 'Content Inventory & Catalog',
+          subtitle: 'Explore, filter, and inspect document metadata across enterprise platforms',
+        };
+      case 'audit':
+        return {
+          title: 'Audit Findings & Risk Prioritization',
+          subtitle: 'Explainable freshness-risk scores (0–100) and deterministic remediation queue',
+        };
+    }
+  };
+
+  const { title, subtitle } = getTitles();
+
   return (
     <header className="topbar">
       <div className="topbar-title-section">
-        <h1>{activeTab === 'dashboard' ? 'Knowledge Health Dashboard' : 'Content Inventory & Catalog'}</h1>
-        <span className="topbar-subtitle">
-          {activeTab === 'dashboard'
-            ? 'Real-time KPI metrics and knowledge distribution derived from enterprise inventory'
-            : 'Explore, filter, and inspect document metadata across enterprise platforms'}
-        </span>
+        <h1>{title}</h1>
+        <span className="topbar-subtitle">{subtitle}</span>
       </div>
 
       <div className="topbar-actions">
@@ -51,7 +69,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           id="btn-sync-data"
           onClick={onRefresh}
           disabled={isRefreshing}
-          title="Synchronize metrics and documents from backend"
+          title="Synchronize metrics and audit findings from backend"
         >
           <RefreshCw size={14} className={isRefreshing ? 'spinning' : ''} />
           <span>{isRefreshing ? 'Syncing...' : 'Sync Data'}</span>

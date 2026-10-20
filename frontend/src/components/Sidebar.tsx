@@ -3,15 +3,15 @@ import {
   ShieldCheck,
   LayoutDashboard,
   FileSpreadsheet,
-  AlertOctagon,
+  ShieldAlert,
   GitCompare,
   Wrench,
   Settings,
 } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'inventory';
-  onSelectTab: (tab: 'dashboard' | 'inventory') => void;
+  activeTab: 'dashboard' | 'inventory' | 'audit';
+  onSelectTab: (tab: 'dashboard' | 'inventory' | 'audit') => void;
   totalRecords?: number;
 }
 
@@ -62,16 +62,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </button>
 
-        <div className="nav-section-title" style={{ marginTop: 14 }}>
-          Intelligence (Upcoming)
-        </div>
-
-        <div className="nav-item disabled" title="Available in Phase 4: Audit & Decay Analysis">
+        <button
+          className={`nav-item ${activeTab === 'audit' ? 'active' : ''}`}
+          id="nav-audit"
+          onClick={() => onSelectTab('audit')}
+        >
           <div className="nav-item-left">
-            <AlertOctagon size={18} />
+            <ShieldAlert size={18} />
             <span>Audit Findings</span>
           </div>
-          <span className="nav-badge-upcoming">Phase 4</span>
+          <span
+            className="card-badge"
+            style={{
+              backgroundColor: activeTab === 'audit' ? 'rgba(255,255,255,0.2)' : 'var(--rose-50)',
+              color: activeTab === 'audit' ? '#ffffff' : 'var(--rose-600)',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+            }}
+          >
+            Phase 3
+          </span>
+        </button>
+
+        <div className="nav-section-title" style={{ marginTop: 14 }}>
+          Intelligence (Upcoming)
         </div>
 
         <div className="nav-item disabled" title="Available in Phase 5: Semantic Contradictions">
@@ -105,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <div className="sidebar-footer">
         <div><strong>Dataset:</strong> ps11_content_inventory</div>
-        <div><strong>Status:</strong> Ready for Phase 2</div>
+        <div><strong>Scoring Engine:</strong> Active (Phase 3)</div>
         <div style={{ color: '#475569', marginTop: 4 }}>FastAPI &bull; React &bull; Vite</div>
       </div>
     </aside>
