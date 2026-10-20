@@ -19,7 +19,8 @@ class Settings(BaseSettings):
         "http://localhost:3000",
     ]
     DATASET_PATH: str = "data/ps11_content_inventory.csv"
-    BACKEND_HOST: str = "127.0.0.1"
+    PORT: int = 8000
+    BACKEND_HOST: str = "0.0.0.0"
     BACKEND_PORT: int = 8000
     
     model_config = SettingsConfigDict(
@@ -27,6 +28,24 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore"
     )
+
+    def get_effective_port(self) -> int:
+        """Get the active port, respecting Cloud Run PORT env var."""
+        import os
+        return int(os.environ.get("PORT", self.PORT or self.BACKEND_PORT))
+
+    def resolve_frontend_dist_path(self) -> Path:
+        """Resolve path to built frontend static assets if present."""
+        candidates = [
+            PROJECT_ROOT / "frontend" / "dist",
+            BACKEND_DIR / "frontend" / "dist",
+            APP_DIR / "static",
+            Path("/app/frontend/dist"),
+        ]
+        for c in candidates:
+            if c.exists() and (c / "index.html").exists():
+                return c
+        return candidates[0]
 
     def resolve_dataset_path(self) -> Path:
         """Resolve the dataset path reliably regardless of cwd."""

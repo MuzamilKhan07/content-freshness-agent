@@ -346,4 +346,145 @@ export interface ContradictionReviewRequest {
   reviewed_by?: string;
 }
 
+// ---------------------------------------------------------
+// Phase 6 AI Remediation & Validation Models
+// ---------------------------------------------------------
+
+export type RemediationJobStatusType =
+  | 'created'
+  | 'planning'
+  | 'drafting'
+  | 'validating'
+  | 'ready_for_review'
+  | 'completed'
+  | 'failed';
+
+export type ValidationStatusType =
+  | 'not_run'
+  | 'passed'
+  | 'passed_with_warnings'
+  | 'failed'
+  | 'needs_human_review';
+
+export type RevisionReviewStatusType =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'changes_requested';
+
+export interface ChangeRecord {
+  change_id: string;
+  original_text: string;
+  proposed_text: string;
+  change_type: string;
+  reason: string;
+  supporting_evidence_refs: string[];
+  validation_outcome: string;
+  requires_human_review: boolean;
+}
+
+export interface ValidationResult {
+  validation_status: ValidationStatusType;
+  supported_claims_count: number;
+  unsupported_claim_findings: string[];
+  remaining_contradiction_refs: string[];
+  potentially_omitted_requirements: string[];
+  evidence_coverage_percent: number;
+  unresolved_questions: string[];
+  validation_summary: string;
+  validated_at: string;
+  validation_timestamp?: string;
+  validator_name: string;
+}
+
+export interface RemediationPlan {
+  document_id: string;
+  primary_objective: string;
+  findings_to_address: string[];
+  required_source_references: string[];
+  proposed_changes_outline: string[];
+  unresolved_questions: string[];
+  has_sufficient_content: boolean;
+  risk_assessment: string;
+  created_at: string;
+}
+
+export interface DraftRevision {
+  revision_id: string;
+  remediation_id: string;
+  document_id: string;
+  revision_number: number;
+  original_content: string;
+  proposed_content: string;
+  revision_summary: string;
+  changes: ChangeRecord[];
+  supporting_evidence_ids: string[];
+  unresolved_questions: string[];
+  validation_status: ValidationStatusType;
+  validation_result?: ValidationResult;
+  review_status: RevisionReviewStatusType;
+  review_note?: string | null;
+  reviewed_at?: string | null;
+  reviewed_by?: string | null;
+  created_at: string;
+}
+
+export interface RemediationJob {
+  remediation_id: string;
+  document_id: string;
+  document_title: string;
+  created_at: string;
+  created_by: string;
+  status: RemediationJobStatusType;
+  original_content_reference: string;
+  risk_score_at_creation?: number | null;
+  source_evidence_ids: string[];
+  source_contradiction_ids: string[];
+  plan?: RemediationPlan;
+  draft_revision_id?: string | null;
+  current_revision_id?: string | null;
+  draft_revisions: DraftRevision[];
+  validation_result?: ValidationResult;
+  error_summary?: string | null;
+}
+
+export interface CreateRemediationJobRequest {
+  document_id: string;
+  remediation_objective?: string;
+  source_evidence_ids?: string[];
+  source_contradiction_ids?: string[];
+  focus_sections?: string;
+}
+
+export interface ReviewRevisionRequest {
+  action: 'approve' | 'reject' | 'request_changes';
+  review_note?: string;
+  reviewer_name?: string;
+}
+
+export interface RegenerateRevisionRequest {
+  feedback_notes: string;
+  focus_areas?: string[];
+}
+
+export interface RemediationSummaryResponse {
+  total_jobs: number;
+  active_jobs: number;
+  ready_for_review_jobs: number;
+  approved_revisions: number;
+  rejected_revisions: number;
+  changes_requested_revisions: number;
+  validation_outcomes: Record<string, number>;
+  last_activity_timestamp?: string | null;
+}
+
+export interface RemediationJobListResponse {
+  items: RemediationJob[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+
 

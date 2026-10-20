@@ -6,6 +6,7 @@ import { ContentInventory } from '../components/ContentInventory';
 import { AuditFindings } from '../components/AuditFindings';
 import { EvidenceFindings } from '../components/EvidenceFindings';
 import { ContradictionDetection } from '../components/ContradictionDetection';
+import { RemediationWorkspace } from '../components/RemediationWorkspace';
 import { DocumentDetailDrawer } from '../components/DocumentDetailDrawer';
 import { ScoreDetailDrawer } from '../components/ScoreDetailDrawer';
 import {
@@ -25,9 +26,10 @@ import {
 } from '../types';
 
 export const DashboardPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'audit' | 'evidence' | 'contradictions'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'audit' | 'evidence' | 'contradictions' | 'remediation'>('dashboard');
   const [selectedDocument, setSelectedDocument] = useState<DocumentRecord | null>(null);
   const [selectedScoredDocument, setSelectedScoredDocument] = useState<ScoredDocument | null>(null);
+  const [remediationTargetDocId, setRemediationTargetDocId] = useState<string | null>(null);
 
   // High-level metrics
   const [_health, setHealth] = useState<HealthResponse | null>(null);
@@ -127,8 +129,20 @@ export const DashboardPage: React.FC = () => {
                 }
               }}
             />
-          ) : (
+          ) : activeTab === 'contradictions' ? (
             <ContradictionDetection
+              onSelectDocumentId={async (docId) => {
+                try {
+                  const detail = await fetchAuditDocumentDetail(docId);
+                  setSelectedScoredDocument(detail);
+                } catch (e) {
+                  console.error('Failed to open document detail:', e);
+                }
+              }}
+            />
+          ) : (
+            <RemediationWorkspace
+              initialDocumentId={remediationTargetDocId}
               onSelectDocumentId={async (docId) => {
                 try {
                   const detail = await fetchAuditDocumentDetail(docId);
@@ -152,6 +166,10 @@ export const DashboardPage: React.FC = () => {
       <ScoreDetailDrawer
         document={selectedScoredDocument}
         onClose={() => setSelectedScoredDocument(null)}
+        onRemediate={(docId) => {
+          setRemediationTargetDocId(docId);
+          setActiveTab('remediation');
+        }}
       />
     </div>
   );

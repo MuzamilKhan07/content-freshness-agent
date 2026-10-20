@@ -184,3 +184,15 @@ def test_no_secrets_in_responses(client):
         content = response.text.lower()
         assert "sk-" not in content
         assert "openai_api_key" not in content
+
+
+def test_readiness_endpoint(client):
+    """Verify that /api/ready reports dataset and dependency readiness."""
+    response = client.get("/api/ready")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ready"
+    assert data["dataset_available"] is True
+    assert data["records_loaded"] == 200
+    assert "service" in data
+

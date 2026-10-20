@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   XCircle,
   Cpu,
+  Wrench,
 } from 'lucide-react';
 import { ScoredDocument, EvidenceItem } from '../types';
 import { fetchDocumentEvidence } from '../services/api';
@@ -17,11 +18,13 @@ import { fetchDocumentEvidence } from '../services/api';
 interface ScoreDetailDrawerProps {
   document: ScoredDocument | null;
   onClose: () => void;
+  onRemediate?: (documentId: string) => void;
 }
 
 export const ScoreDetailDrawer: React.FC<ScoreDetailDrawerProps> = ({
   document,
   onClose,
+  onRemediate,
 }) => {
   const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
   const [loadingEvidence, setLoadingEvidence] = useState<boolean>(false);
@@ -106,14 +109,39 @@ export const ScoreDetailDrawer: React.FC<ScoreDetailDrawerProps> = ({
               <span className="badge-tag badge-type">{document.content_type}</span>
             </div>
           </div>
-          <button
-            className="btn-close"
-            onClick={onClose}
-            title="Close score explanation (Esc)"
-            aria-label="Close"
-          >
-            <X size={20} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {onRemediate && (
+              <button
+                className="primary-btn"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontSize: '0.78rem',
+                  padding: '6px 12px',
+                  backgroundColor: '#10b981',
+                  borderColor: '#10b981',
+                }}
+                onClick={() => {
+                  if (document) {
+                    onRemediate(document.content_id);
+                    onClose();
+                  }
+                }}
+              >
+                <Wrench size={14} />
+                <span>Remediate</span>
+              </button>
+            )}
+            <button
+              className="btn-close"
+              onClick={onClose}
+              title="Close score explanation (Esc)"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Drawer Body */}

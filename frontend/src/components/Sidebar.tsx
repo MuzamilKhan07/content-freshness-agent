@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'inventory' | 'audit' | 'evidence' | 'contradictions';
-  onSelectTab: (tab: 'dashboard' | 'inventory' | 'audit' | 'evidence' | 'contradictions') => void;
+  activeTab: 'dashboard' | 'inventory' | 'audit' | 'evidence' | 'contradictions' | 'remediation';
+  onSelectTab: (tab: 'dashboard' | 'inventory' | 'audit' | 'evidence' | 'contradictions' | 'remediation') => void;
   totalRecords?: number;
 }
 
@@ -130,16 +130,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
 
         <div className="nav-section-title" style={{ marginTop: 14 }}>
-          Autonomous Action (Upcoming)
+          Autonomous Remediation
         </div>
 
-        <div className="nav-item disabled" title="Available in Phase 6: Autonomous Remediation">
+        <button
+          className={`nav-item ${activeTab === 'remediation' ? 'active' : ''}`}
+          id="nav-remediation"
+          onClick={() => onSelectTab('remediation')}
+        >
           <div className="nav-item-left">
             <Wrench size={18} />
             <span>Remediation</span>
           </div>
-          <span className="nav-badge-upcoming">Phase 6</span>
-        </div>
+          <span
+            className="card-badge"
+            style={{
+              backgroundColor: activeTab === 'remediation' ? 'rgba(255,255,255,0.2)' : 'rgba(16, 185, 129, 0.1)',
+              color: activeTab === 'remediation' ? '#ffffff' : '#10b981',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+            }}
+          >
+            Phase 6
+          </span>
+        </button>
 
         <div className="nav-section-title" style={{ marginTop: 14 }}>
           Administration

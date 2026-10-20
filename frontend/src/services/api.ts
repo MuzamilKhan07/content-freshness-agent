@@ -21,6 +21,14 @@ import {
   ContradictionSummaryResponse,
   ContradictionListResponse,
   ContradictionReviewRequest,
+  RemediationJob,
+  DraftRevision,
+  ValidationResult,
+  CreateRemediationJobRequest,
+  ReviewRevisionRequest,
+  RegenerateRevisionRequest,
+  RemediationSummaryResponse,
+  RemediationJobListResponse,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -300,5 +308,152 @@ export async function fetchDocumentContent(documentId: string): Promise<any> {
   }
   return response.json();
 }
+
+export async function ingestDocumentContent(
+  documentId: string,
+  text: string,
+  source: string = 'manual_ingestion'
+): Promise<any> {
+  const encodedId = encodeURIComponent(documentId.trim());
+  const response = await fetch(`${API_BASE_URL}/documents/${encodedId}/content`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, source }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to ingest content for ${documentId}`);
+  }
+  return response.json();
+}
+
+// ---------------------------------------------------------
+// Phase 6 AI Remediation & Review API
+// ---------------------------------------------------------
+
+export async function fetchRemediationSummary(): Promise<RemediationSummaryResponse> {
+  const response = await fetch(`${API_BASE_URL}/remediation/summary`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch remediation summary: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchRemediationJobs(params: {
+  page?: number;
+  page_size?: number;
+  document_id?: string;
+  status?: string;
+  validation_status?: string;
+  review_status?: string;
+} = {}): Promise<RemediationJobListResponse> {
+  const url = new URL(`${window.location.origin}${API_BASE_URL}/remediation/jobs`);
+  if (params.page !== undefined) url.searchParams.set('page', String(params.page));
+  if (params.page_size !== undefined) url.searchParams.set('page_size', String(params.page_size));
+  if (params.document_id) url.searchParams.set('document_id', params.document_id);
+  if (params.status && params.status !== 'all') url.searchParams.set('status', params.status);
+  if (params.validation_status && params.validation_status !== 'all') url.searchParams.set('validation_status', params.validation_status);
+  if (params.review_status && params.review_status !== 'all') url.searchParams.set('review_status', params.review_status);
+
+  const response = await fetch(url.toString());
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch remediation jobs: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchRemediationJob(remediationId: string): Promise<RemediationJob> {
+  const encodedId = encodeURIComponent(remediationId.trim());
+  const response = await fetch(`${API_BASE_URL}/remediation/jobs/${encodedId}`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Remediation job ${remediationId} not found`);
+  }
+  return response.json();
+}
+
+export async function createRemediationJob(payload: CreateRemediationJobRequest): Promise<RemediationJob> {
+  const response = await fetch(`${API_BASE_URL}/remediation/jobs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to create remediation job: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function generateRemediationDraft(remediationId: string): Promise<DraftRevision> {
+  const encodedId = encodeURIComponent(remediationId.trim());
+  const response = await fetch(`${API_BASE_URL}/remediation/jobs/${encodedId}/generate`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to generate revision draft: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function validateRevision(revisionId: string): Promise<ValidationResult> {
+  const encodedId = encodeURIComponent(revisionId.trim());
+  const response = await fetch(`${API_BASE_URL}/remediation/revisions/${encodedId}/validate`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to validate revision: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchDraftRevision(revisionId: string): Promise<DraftRevision> {
+  const encodedId = encodeURIComponent(revisionId.trim());
+  const response = await fetch(`${API_BASE_URL}/remediation/revisions/${encodedId}`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Revision ${revisionId} not found`);
+  }
+  return response.json();
+}
+
+export async function reviewDraftRevision(
+  revisionId: string,
+  payload: ReviewRevisionRequest
+): Promise<DraftRevision> {
+  const encodedId = encodeURIComponent(revisionId.trim());
+  const response = await fetch(`${API_BASE_URL}/remediation/revisions/${encodedId}/review`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to review revision: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function regenerateDraftRevision(
+  revisionId: string,
+  payload: RegenerateRevisionRequest
+): Promise<DraftRevision> {
+  const encodedId = encodeURIComponent(revisionId.trim());
+  const response = await fetch(`${API_BASE_URL}/remediation/revisions/${encodedId}/regenerate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to regenerate revision: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
 
 
