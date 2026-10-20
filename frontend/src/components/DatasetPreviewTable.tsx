@@ -20,7 +20,7 @@ export const DatasetPreviewTable: React.FC<DatasetPreviewTableProps> = ({
   datasetAvailable,
 }) => {
   // Helper to render action badges
-  const renderActionBadge = (action?: string) => {
+  const renderActionBadge = (action?: string | null) => {
     if (!action) return <span className="text-dim">-</span>;
     const lower = action.toLowerCase();
     if (lower.includes('update')) {
@@ -36,7 +36,7 @@ export const DatasetPreviewTable: React.FC<DatasetPreviewTableProps> = ({
   };
 
   // Helper to render boolean flags
-  const renderBooleanFlag = (val?: string | boolean) => {
+  const renderBooleanFlag = (val?: string | boolean | null) => {
     if (val === undefined || val === null || val === '') return <span className="text-dim">-</span>;
     const isTrue = val === true || String(val).toLowerCase() === 'true';
     return isTrue ? (
@@ -47,7 +47,7 @@ export const DatasetPreviewTable: React.FC<DatasetPreviewTableProps> = ({
   };
 
   // Helper to render staleness score
-  const renderStalenessScore = (score?: string | number) => {
+  const renderStalenessScore = (score?: string | number | null) => {
     if (score === undefined || score === null || score === '') {
       return <span className="text-dim">-</span>;
     }

@@ -1,4 +1,12 @@
-import { HealthResponse, DatasetStatusResponse, DatasetPreviewResponse } from '../types';
+import {
+  HealthResponse,
+  DatasetStatusResponse,
+  DashboardSummaryResponse,
+  DashboardDistributionsResponse,
+  DocumentListResponse,
+  DocumentRecord,
+  DocumentQueryParams,
+} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -18,10 +26,48 @@ export async function fetchDatasetStatus(): Promise<DatasetStatusResponse> {
   return response.json();
 }
 
-export async function fetchDatasetPreview(limit: number = 10): Promise<DatasetPreviewResponse> {
-  const response = await fetch(`${API_BASE_URL}/dataset/preview?limit=${limit}`);
+export async function fetchDashboardSummary(): Promise<DashboardSummaryResponse> {
+  const response = await fetch(`${API_BASE_URL}/dashboard/summary`);
   if (!response.ok) {
-    throw new Error(`Dataset preview query failed: HTTP ${response.status}`);
+    throw new Error(`Dashboard summary query failed: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchDashboardDistributions(): Promise<DashboardDistributionsResponse> {
+  const response = await fetch(`${API_BASE_URL}/dashboard/distributions`);
+  if (!response.ok) {
+    throw new Error(`Dashboard distributions query failed: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchDocuments(params: DocumentQueryParams = {}): Promise<DocumentListResponse> {
+  const url = new URL(`${window.location.origin}${API_BASE_URL}/documents`);
+
+  if (params.page !== undefined) url.searchParams.set('page', String(params.page));
+  if (params.page_size !== undefined) url.searchParams.set('page_size', String(params.page_size));
+  if (params.search && params.search.trim()) url.searchParams.set('search', params.search.trim());
+  if (params.platform && params.platform !== 'all') url.searchParams.set('platform', params.platform);
+  if (params.content_type && params.content_type !== 'all') url.searchParams.set('content_type', params.content_type);
+  if (params.status && params.status !== 'all') url.searchParams.set('status', params.status);
+  if (params.sort_by) url.searchParams.set('sort_by', params.sort_by);
+  if (params.sort_order) url.searchParams.set('sort_order', params.sort_order);
+
+  const response = await fetch(url.toString());
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch documents: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchDocumentById(documentId: string): Promise<DocumentRecord> {
+  const encodedId = encodeURIComponent(documentId.trim());
+  const response = await fetch(`${API_BASE_URL}/documents/${encodedId}`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Document ${documentId} not found (HTTP ${response.status})`);
   }
   return response.json();
 }

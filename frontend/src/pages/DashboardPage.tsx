@@ -1,49 +1,66 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Header } from '../components/Header';
-import { MetricsOverview } from '../components/MetricsOverview';
-import { DatasetPreviewTable } from '../components/DatasetPreviewTable';
-import { DatasetWarnings } from '../components/DatasetWarnings';
-import { fetchHealth, fetchDatasetStatus, fetchDatasetPreview } from '../services/api';
-import { HealthResponse, DatasetStatusResponse, DatasetPreviewResponse } from '../types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Sidebar } from '../components/Sidebar';
+import { TopBar } from '../components/TopBar';
+import { DashboardOverview } from '../components/DashboardOverview';
+import { ContentInventory } from '../components/ContentInventory';
+import { DocumentDetailDrawer } from '../components/DocumentDetailDrawer';
+import {
+  fetchHealth,
+  fetchDatasetStatus,
+  fetchDashboardSummary,
+  fetchDashboardDistributions,
+} from '../services/api';
+import {
+  HealthResponse,
+  DatasetStatusResponse,
+  DashboardSummaryResponse,
+  DashboardDistributionsResponse,
+  DocumentRecord,
+} from '../types';
 
 export const DashboardPage: React.FC = () => {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [status, setStatus] = useState<DatasetStatusResponse | null>(null);
-  const [preview, setPreview] = useState<DatasetPreviewResponse | null>(null);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory'>('dashboard');
+  const [selectedDocument, setSelectedDocument] = useState<DocumentRecord | null>(null);
+
+  // High-level metrics
+  const [_health, setHealth] = useState<HealthResponse | null>(null);
+  const [_datasetStatus, setDatasetStatus] = useState<DatasetStatusResponse | null>(null);
+  const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
+  const [distributions, setDistributions] = useState<DashboardDistributionsResponse | null>(null);
+
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<string>('');
 
-  const loadData = useCallback(async (isManualRefresh = false) => {
-    if (isManualRefresh) {
+  const loadDashboardData = useCallback(async (isManual = false) => {
+    if (isManual) {
       setIsRefreshing(true);
     } else {
       setLoading(true);
     }
-    setErrorMessage(null);
 
     try {
-      // 1. Health check
-      const healthData = await fetchHealth();
-      setHealth(healthData);
+      // 1. Health
+      const h = await fetchHealth();
+      setHealth(h);
       setBackendOnline(true);
       setLastChecked(new Date().toLocaleTimeString());
 
       // 2. Dataset Status
-      const statusData = await fetchDatasetStatus();
-      setStatus(statusData);
+      const ds = await fetchDatasetStatus();
+      setDatasetStatus(ds);
 
-      // 3. Dataset Preview
-      const previewData = await fetchDatasetPreview(10);
-      setPreview(previewData);
+      // 3. Dashboard Summary
+      const s = await fetchDashboardSummary();
+      setSummary(s);
+
+      // 4. Distributions
+      const dist = await fetchDashboardDistributions();
+      setDistributions(dist);
     } catch (err: any) {
-      console.error('Error fetching FreshGuard data:', err);
+      console.error('Error fetching dashboard metrics:', err);
       setBackendOnline(false);
-      setErrorMessage(
-        err.message || 'Unable to connect to FreshGuard AI backend service. Please ensure the backend is running.'
-      );
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -51,55 +68,51 @@ export const DashboardPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    loadData(false);
-  }, [loadData]);
-
-  const allWarnings = [
-    ...(status?.warnings || []),
-    ...(preview?.warnings || []),
-  ].filter((v, i, a) => a.indexOf(v) === i); // Deduplicate
+    loadDashboardData(false);
+  }, [loadDashboardData]);
 
   return (
-    <div className="app-container">
-      <Header
-        backendOnline={backendOnline}
-        isRefreshing={isRefreshing}
-        onRefresh={() => loadData(true)}
-        lastChecked={lastChecked}
+    <div className="app-layout">
+      {/* Sidebar Navigation */}
+      <Sidebar
+        activeTab={activeTab}
+        onSelectTab={(tab) => setActiveTab(tab)}
+        totalRecords={summary?.total_documents}
       />
 
-      <main>
-        <MetricsOverview
-          datasetStatus={status}
-          health={health}
-          loading={loading && !status}
+      {/* Main Content Area */}
+      <div className="main-wrapper">
+        <TopBar
+          activeTab={activeTab}
+          backendOnline={backendOnline}
+          isRefreshing={isRefreshing}
+          onRefresh={() => loadDashboardData(true)}
+          lastChecked={lastChecked}
         />
 
-        {allWarnings.length > 0 && (
-          <DatasetWarnings
-            warnings={allWarnings}
-            isError={!status?.available}
-          />
-        )}
+        <main className="page-container">
+          {activeTab === 'dashboard' ? (
+            <DashboardOverview
+              summary={summary}
+              distributions={distributions}
+              loading={loading && !summary}
+              onNavigateToInventory={() => setActiveTab('inventory')}
+            />
+          ) : (
+            <ContentInventory
+              onSelectDocument={(doc) => setSelectedDocument(doc)}
+              availablePlatforms={summary?.platforms_list || []}
+              availableContentTypes={summary?.content_types_list || []}
+            />
+          )}
+        </main>
+      </div>
 
-        <DatasetPreviewTable
-          records={preview?.preview || []}
-          columns={preview?.columns || status?.columns || []}
-          totalRecords={preview?.total_records || status?.record_count || 0}
-          loading={loading}
-          error={errorMessage}
-          datasetAvailable={status?.available ?? false}
-        />
-      </main>
-
-      <footer className="app-footer">
-        <div>
-          <span>FreshGuard AI System &bull; Phase 1 Project Foundation</span>
-        </div>
-        <div>
-          <span>Antigravity Environment &bull; Enterprise Content Freshness</span>
-        </div>
-      </footer>
+      {/* Slide-over Document Detail Drawer */}
+      <DocumentDetailDrawer
+        document={selectedDocument}
+        onClose={() => setSelectedDocument(null)}
+      />
     </div>
   );
 };
