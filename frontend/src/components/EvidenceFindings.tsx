@@ -28,6 +28,7 @@ import {
   EvidenceSeverityType,
   ScoredDocument,
 } from '../types';
+import { LiveUrlScanner } from './LiveUrlScanner';
 
 interface EvidenceFindingsProps {
   onSelectScoredDocument?: (doc: ScoredDocument) => void;
@@ -213,6 +214,21 @@ export const EvidenceFindings: React.FC<EvidenceFindingsProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Live Webpage & URL Scanner */}
+      <LiveUrlScanner
+        onDocumentImported={async (docId) => {
+          setAuditMessage({
+            text: `Web document ${docId} imported into inventory catalog! Phase 3 scores refreshed.`,
+            type: 'success',
+          });
+          await loadSummary();
+          await loadFindings();
+          if (onSelectDocumentId) {
+            onSelectDocumentId(docId);
+          }
+        }}
+      />
 
       {/* Audit Control Console */}
       <div className="card" style={{ marginBottom: 20, padding: '18px 22px', borderLeft: '4px solid var(--primary-600)' }}>

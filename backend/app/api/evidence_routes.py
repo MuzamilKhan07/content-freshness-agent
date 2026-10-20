@@ -14,6 +14,16 @@ from backend.app.services.evidence_service import (
     get_evidence_orchestrator,
 )
 
+from backend.app.models.url_inspection_models import (
+    ImportScannedUrlRequest,
+    InspectUrlRequest,
+    UrlInspectionResponse,
+)
+from backend.app.services.url_scanner_service import (
+    UrlScannerService,
+    get_url_scanner_service,
+)
+
 logger = logging.getLogger("freshguard.evidence_api")
 router = APIRouter(prefix="/api/evidence", tags=["Evidence Collection Agent"])
 
@@ -101,3 +111,42 @@ def get_audit_record(
             detail=f"Audit execution with ID '{audit_id}' was not found in audit history.",
         )
     return record
+
+
+@router.post(
+    "/inspect-url",
+    response_model=UrlInspectionResponse,
+    summary="Live inspect external URL or webpage",
+)
+def inspect_url(
+    request: InspectUrlRequest,
+    scanner: UrlScannerService = Depends(get_url_scanner_service),
+) -> UrlInspectionResponse:
+    """
+    Inspect any public webpage or document URL on demand.
+    Extracts broken links, scans for deprecated tools, evaluates metadata quality,
+    and calculates a deterministic freshness risk score.
+    """
+    return scanner.inspect_url(
+        target_url=request.url,
+        check_links=request.check_links,
+        max_links_to_check=request.max_links_to_check,
+    )
+
+
+@router.post(
+    "/inspect-url/import",
+    summary="Import inspected URL into document catalog",
+)
+def import_scanned_url(
+    request: ImportScannedUrlRequest,
+    scanner: UrlScannerService = Depends(get_url_scanner_service),
+):
+    """Import inspected URL as a persistent document in the catalog."""
+    doc_id = scanner.import_scanned_url_to_catalog(request)
+    return {
+        "status": "imported",
+        "document_id": doc_id,
+        "message": f"Web document imported successfully as {doc_id}",
+    }
+

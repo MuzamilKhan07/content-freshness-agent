@@ -486,5 +486,68 @@ export interface RemediationJobListResponse {
   total_pages: number;
 }
 
+export interface ExtractedLinkResult {
+  url: string;
+  anchor_text?: string | null;
+  status_code?: number | null;
+  status: 'live' | 'broken' | 'blocked' | 'unreachable' | 'unknown' | string;
+  error?: string | null;
+}
+
+export interface DeprecatedToolFinding {
+  tool_name: string;
+  pattern: string;
+  matched_text: string;
+  context_excerpt: string;
+  severity: string;
+  recommended_replacement?: string | null;
+}
+
+export interface MetadataQualityFinding {
+  field: string;
+  issue: string;
+  severity: string;
+  observed_value?: string | null;
+}
+
+export interface UrlInspectionResponse {
+  url: string;
+  status: 'success' | 'error';
+  page_title: string;
+  page_description?: string | null;
+  author?: string | null;
+  last_modified?: string | null;
+  status_code?: number | null;
+  character_count: number;
+  word_count: number;
+  broken_links_count: number;
+  total_links_found: number;
+  links_checked_count: number;
+  broken_links: ExtractedLinkResult[];
+  live_links: ExtractedLinkResult[];
+  deprecated_tools_count: number;
+  deprecated_tools: DeprecatedToolFinding[];
+  metadata_quality_issues_count: number;
+  metadata_quality_issues: MetadataQualityFinding[];
+  freshness_score: number;
+  risk_level: string;
+  score_breakdown: Record<string, any>;
+  text_preview: string;
+  error_message?: string | null;
+  imported_as_document_id?: string | null;
+}
+
+export interface ImportScannedUrlRequest {
+  url: string;
+  title: string;
+  platform?: string;
+  subject_area?: string;
+  author?: string;
+  raw_text?: string;
+  has_broken_links?: boolean;
+  mentions_deprecated_tool?: boolean;
+}
+
+
 
 

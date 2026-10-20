@@ -37,10 +37,17 @@ ALLOWED_SORT_FIELDS = {
 
 
 class DatasetService:
-    """Service responsible for loading, querying, and analyzing the knowledge dataset."""
+    _extra_records: List[Dict[str, Any]] = []
 
     def __init__(self, dataset_path: Optional[Path] = None):
         self._custom_path = dataset_path
+
+    @classmethod
+    def add_document_record(cls, record: Dict[str, Any]) -> None:
+        """Add an in-memory document record (e.g. from live URL imports)."""
+        cls._extra_records.append(record)
+
+
 
     @property
     def file_path(self) -> Path:
@@ -85,6 +92,10 @@ class DatasetService:
                 encoding="utf-8-sig",
                 on_bad_lines="warn",
             )
+
+            if self._extra_records:
+                extra_df = pd.DataFrame(self._extra_records)
+                df = pd.concat([df, extra_df], ignore_index=True) if not df.empty else extra_df
 
             if df.empty:
                 warnings.append("Dataset file is empty (0 records found).")
@@ -490,6 +501,13 @@ class DatasetService:
         )
 
 
+_dataset_service_instance: Optional[DatasetService] = None
+
+
 def get_dataset_service() -> DatasetService:
-    """Dependency provider for DatasetService."""
-    return DatasetService()
+    """Dependency provider for DatasetService singleton."""
+    global _dataset_service_instance
+    if _dataset_service_instance is None:
+        _dataset_service_instance = DatasetService()
+    return _dataset_service_instance
+

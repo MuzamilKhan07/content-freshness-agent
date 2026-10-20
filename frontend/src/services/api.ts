@@ -29,6 +29,8 @@ import {
   RegenerateRevisionRequest,
   RemediationSummaryResponse,
   RemediationJobListResponse,
+  UrlInspectionResponse,
+  ImportScannedUrlRequest,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -219,6 +221,43 @@ export async function fetchEvidenceAuditRecord(auditId: string): Promise<Evidenc
   }
   return response.json();
 }
+
+export async function inspectUrl(
+  url: string,
+  checkLinks: boolean = true,
+  maxLinksToCheck: number = 15
+): Promise<UrlInspectionResponse> {
+  const response = await fetch(`${API_BASE_URL}/evidence/inspect-url`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      url,
+      check_links: checkLinks,
+      max_links_to_check: maxLinksToCheck,
+    }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `URL inspection failed: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function importScannedUrl(
+  payload: ImportScannedUrlRequest
+): Promise<{ status: string; document_id: string; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/evidence/inspect-url/import`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Import failed: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
 
 // ---------------------------------------------------------
 // Phase 5 AI Contradiction Detection API
