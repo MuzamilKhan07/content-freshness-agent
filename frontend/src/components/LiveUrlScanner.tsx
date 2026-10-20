@@ -50,7 +50,6 @@ export const LiveUrlScanner: React.FC<LiveUrlScannerProps> = ({ onDocumentImport
       if (data.status === 'error' && data.error_message) {
         setErrorMessage(data.error_message);
       } else {
-        // Set default tab based on where issues are found
         if (data.deprecated_tools_count > 0) {
           setActiveTab('deprecated');
         } else if (data.broken_links_count > 0) {
@@ -96,86 +95,75 @@ export const LiveUrlScanner: React.FC<LiveUrlScannerProps> = ({ onDocumentImport
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl mb-8">
+    <div className="scanner-container">
       {/* Header */}
-      <div className="flex items-start justify-between mb-5">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20">
-              <Globe className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                Live URL Freshness & Telemetry Scanner
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-                  SSRF-Guarded
-                </span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Paste any webpage or documentation link to automatically audit broken links, deprecated tools, and metadata decay.
-              </p>
-            </div>
+      <div className="scanner-header">
+        <div className="scanner-title-group">
+          <div className="scanner-icon-badge">
+            <Globe size={22} />
+          </div>
+          <div>
+            <h3 className="scanner-title">
+              Live URL Freshness &amp; Decay Scanner
+              <span className="scanner-pill-tag">SSRF Protected</span>
+            </h3>
+            <p className="scanner-subtitle">
+              Paste any webpage or documentation link to extract broken links, deprecated tool references, and metadata decay.
+            </p>
           </div>
         </div>
       </div>
 
       {/* Input Form */}
-      <form onSubmit={handleScan} className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <Link2 className="w-4 h-4" />
-            </div>
+      <form onSubmit={handleScan} className="scanner-form">
+        <div className="scanner-input-row">
+          <div className="scanner-input-wrap">
+            <Link2 className="scanner-input-icon" size={18} />
             <input
               type="text"
-              placeholder="Paste any URL (e.g. https://docs.example.com/team-guide)..."
+              placeholder="Paste any URL (e.g. https://docs.python.org/3/ or https://example.com)..."
               value={targetUrl}
               onChange={(e) => setTargetUrl(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700/80 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              className="scanner-input"
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              disabled={isScanning || !targetUrl.trim()}
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition shadow-lg shadow-indigo-600/20 whitespace-nowrap"
-            >
-              {isScanning ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  Scanning Page...
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4" />
-                  Scan URL
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isScanning || !targetUrl.trim()}
+            className="scanner-submit-btn"
+          >
+            {isScanning ? (
+              <>
+                <RefreshCw size={16} className="animate-spin" />
+                Scanning Webpage...
+              </>
+            ) : (
+              <>
+                <Search size={16} />
+                Scan URL
+              </>
+            )}
+          </button>
         </div>
 
-        {/* Option toggles and quick samples */}
-        <div className="flex flex-wrap items-center justify-between text-xs text-slate-400 pt-1">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
+        {/* Options Row */}
+        <div className="scanner-options-row">
+          <label className="scanner-checkbox-label">
             <input
               type="checkbox"
               checked={checkLinks}
               onChange={(e) => setCheckLinks(e.target.checked)}
-              className="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
             <span>Probe extracted hyperlinks for HTTP 404/dead links (Safe network check)</span>
           </label>
 
-          <div className="flex items-center gap-2 mt-2 sm:mt-0">
-            <span className="text-slate-500">Try sample:</span>
+          <div className="scanner-samples">
+            <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Try sample:</span>
             <button
               type="button"
-              onClick={() => {
-                setTargetUrl('https://example.com');
-              }}
-              className="text-indigo-400 hover:text-indigo-300 underline"
+              onClick={() => setTargetUrl('https://example.com')}
+              className="scanner-sample-link"
             >
               example.com
             </button>
@@ -183,58 +171,80 @@ export const LiveUrlScanner: React.FC<LiveUrlScannerProps> = ({ onDocumentImport
         </div>
       </form>
 
-      {/* Error Message */}
+      {/* Error Notice */}
       {errorMessage && (
-        <div className="mt-4 p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-xs text-rose-300 flex items-start gap-2.5">
-          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-rose-400" />
-          <div className="flex-1">
-            <p className="font-medium text-rose-200">Scan Notice</p>
-            <p className="mt-0.5">{errorMessage}</p>
+        <div className="scanner-alert-box">
+          <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: 2, color: '#e11d48' }} />
+          <div>
+            <div style={{ fontWeight: 700, color: '#9f1239', marginBottom: 2 }}>Scan Notice</div>
+            <div>{errorMessage}</div>
           </div>
         </div>
       )}
 
-      {/* Success / Result View */}
+      {/* Results View */}
       {scanResult && scanResult.status === 'success' && (
-        <div className="mt-6 border-t border-slate-800 pt-5">
-          {/* Page Overview Header */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-950/80 border border-slate-800 rounded-xl p-4 mb-5">
+        <div className="scanner-results">
+          {/* Page Meta Card */}
+          <div className="scanner-page-meta-card">
             <div>
-              <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full uppercase tracking-wider ${
-                  scanResult.risk_level === 'Critical'
-                    ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                    : scanResult.risk_level === 'High'
-                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                    : scanResult.risk_level === 'Moderate'
-                    ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-                    : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                }`}>
-                  {scanResult.risk_level} Risk ({scanResult.freshness_score}/100)
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 9999,
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                    backgroundColor:
+                      scanResult.risk_level === 'Critical'
+                        ? '#fee2e2'
+                        : scanResult.risk_level === 'High'
+                        ? '#fef3c7'
+                        : scanResult.risk_level === 'Moderate'
+                        ? '#fef9c3'
+                        : '#dcfce7',
+                    color:
+                      scanResult.risk_level === 'Critical'
+                        ? '#b91c1c'
+                        : scanResult.risk_level === 'High'
+                        ? '#b45309'
+                        : scanResult.risk_level === 'Moderate'
+                        ? '#a16207'
+                        : '#15803d',
+                  }}
+                >
+                  {scanResult.risk_level} Risk ({scanResult.freshness_score} / 100)
                 </span>
-                <span className="text-xs text-slate-400">
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
                   HTTP {scanResult.status_code || 200}
                 </span>
+                {scanResult.last_modified && (
+                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                    &bull; Modified: {scanResult.last_modified}
+                  </span>
+                )}
               </div>
-              <h4 className="text-base font-semibold text-slate-100 mt-1">
+              <div className="scanner-page-title" style={{ marginTop: 4 }}>
                 {scanResult.page_title}
-              </h4>
+              </div>
               <a
                 href={scanResult.url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 mt-0.5 truncate max-w-xl"
+                className="scanner-page-url"
               >
                 {scanResult.url}
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink size={12} />
               </a>
             </div>
 
             {/* Import Button */}
-            <div className="flex items-center gap-3">
+            <div>
               {importedDocId ? (
-                <div className="px-3.5 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-medium text-emerald-400 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <div className="scanner-imported-pill">
+                  <CheckCircle2 size={16} />
                   <span>{importSuccessMessage}</span>
                 </div>
               ) : (
@@ -242,9 +252,9 @@ export const LiveUrlScanner: React.FC<LiveUrlScannerProps> = ({ onDocumentImport
                   type="button"
                   onClick={handleImport}
                   disabled={isImporting}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-medium rounded-lg flex items-center gap-2 transition shadow-md shadow-emerald-600/20 whitespace-nowrap"
+                  className="scanner-import-btn"
                 >
-                  <Download className="w-3.5 h-3.5" />
+                  <Download size={15} />
                   {isImporting ? 'Importing...' : 'Add to Inventory Catalog'}
                 </button>
               )}
@@ -252,153 +262,135 @@ export const LiveUrlScanner: React.FC<LiveUrlScannerProps> = ({ onDocumentImport
           </div>
 
           {/* 4 Hero KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-5">
+          <div className="scanner-kpi-grid">
             {/* Broken Links */}
-            <div className={`p-4 rounded-xl border ${
-              scanResult.broken_links_count > 0
-                ? 'bg-rose-950/20 border-rose-800/40'
-                : 'bg-slate-950/60 border-slate-800/80'
-            }`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-400">Broken Links</span>
-                <XCircle className={`w-4 h-4 ${scanResult.broken_links_count > 0 ? 'text-rose-400' : 'text-slate-500'}`} />
+            <div className={`scanner-kpi-card ${scanResult.broken_links_count > 0 ? 'has-issues' : 'is-healthy'}`}>
+              <div className="scanner-kpi-header">
+                <span className="scanner-kpi-label">Broken Links</span>
+                {scanResult.broken_links_count > 0 ? (
+                  <XCircle size={18} color="#e11d48" />
+                ) : (
+                  <CheckCircle2 size={18} color="#10b981" />
+                )}
               </div>
-              <div className="mt-2 text-2xl font-bold text-slate-100">
+              <div className="scanner-kpi-val" style={{ color: scanResult.broken_links_count > 0 ? '#e11d48' : '#0f172a' }}>
                 {scanResult.broken_links_count}
               </div>
-              <div className="mt-1 text-[11px] text-slate-400">
-                {scanResult.links_checked_count} links probed
+              <div className="scanner-kpi-subtext">
+                {scanResult.links_checked_count} hyperlinks checked
               </div>
             </div>
 
             {/* Deprecated Tools */}
-            <div className={`p-4 rounded-xl border ${
-              scanResult.deprecated_tools_count > 0
-                ? 'bg-amber-950/20 border-amber-800/40'
-                : 'bg-slate-950/60 border-slate-800/80'
-            }`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-400">Deprecated Tools</span>
-                <ShieldAlert className={`w-4 h-4 ${scanResult.deprecated_tools_count > 0 ? 'text-amber-400' : 'text-slate-500'}`} />
+            <div className={`scanner-kpi-card ${scanResult.deprecated_tools_count > 0 ? 'has-warning' : 'is-healthy'}`}>
+              <div className="scanner-kpi-header">
+                <span className="scanner-kpi-label">Deprecated Tools</span>
+                <ShieldAlert size={18} color={scanResult.deprecated_tools_count > 0 ? '#f59e0b' : '#10b981'} />
               </div>
-              <div className="mt-2 text-2xl font-bold text-slate-100">
+              <div className="scanner-kpi-val" style={{ color: scanResult.deprecated_tools_count > 0 ? '#d97706' : '#0f172a' }}>
                 {scanResult.deprecated_tools_count}
               </div>
-              <div className="mt-1 text-[11px] text-slate-400">
-                Retired tools detected
+              <div className="scanner-kpi-subtext">
+                Legacy software detected
               </div>
             </div>
 
             {/* Metadata Quality */}
-            <div className={`p-4 rounded-xl border ${
-              scanResult.metadata_quality_issues_count > 0
-                ? 'bg-yellow-950/20 border-yellow-800/40'
-                : 'bg-slate-950/60 border-slate-800/80'
-            }`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-400">Metadata Issues</span>
-                <AlertTriangle className={`w-4 h-4 ${scanResult.metadata_quality_issues_count > 0 ? 'text-yellow-400' : 'text-slate-500'}`} />
+            <div className={`scanner-kpi-card ${scanResult.metadata_quality_issues_count > 0 ? 'has-warning' : 'is-healthy'}`}>
+              <div className="scanner-kpi-header">
+                <span className="scanner-kpi-label">Metadata Issues</span>
+                <AlertTriangle size={18} color={scanResult.metadata_quality_issues_count > 0 ? '#f59e0b' : '#10b981'} />
               </div>
-              <div className="mt-2 text-2xl font-bold text-slate-100">
+              <div className="scanner-kpi-val" style={{ color: scanResult.metadata_quality_issues_count > 0 ? '#b45309' : '#0f172a' }}>
                 {scanResult.metadata_quality_issues_count}
               </div>
-              <div className="mt-1 text-[11px] text-slate-400">
-                Missing headers/attributes
+              <div className="scanner-kpi-subtext">
+                Missing tags or attributes
               </div>
             </div>
 
-            {/* Freshness Risk Score */}
-            <div className="p-4 rounded-xl border bg-slate-950/60 border-slate-800/80">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-400">Risk Score</span>
-                <Sparkles className="w-4 h-4 text-indigo-400" />
+            {/* Risk Score */}
+            <div className="scanner-kpi-card">
+              <div className="scanner-kpi-header">
+                <span className="scanner-kpi-label">Freshness Risk</span>
+                <Sparkles size={18} color="#4f46e5" />
               </div>
-              <div className="mt-2 text-2xl font-bold text-slate-100">
+              <div className="scanner-kpi-val">
                 {scanResult.freshness_score}
-                <span className="text-xs text-slate-400 font-normal"> / 100</span>
+                <span style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 500 }}> / 100</span>
               </div>
-              <div className="mt-1 text-[11px] text-slate-400">
+              <div className="scanner-kpi-subtext">
                 {scanResult.word_count} words extracted
               </div>
             </div>
           </div>
 
-          {/* Sub-tabs */}
-          <div className="flex border-b border-slate-800 gap-2 mb-4 text-xs font-medium">
+          {/* Sub-Tabs Bar */}
+          <div className="scanner-tab-bar">
             <button
               type="button"
               onClick={() => setActiveTab('deprecated')}
-              className={`pb-2 px-1 border-b-2 flex items-center gap-1.5 transition ${
-                activeTab === 'deprecated'
-                  ? 'border-amber-500 text-amber-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-300'
-              }`}
+              className={`scanner-tab-btn ${activeTab === 'deprecated' ? 'active' : ''}`}
             >
-              Deprecated Tools ({scanResult.deprecated_tools_count})
+              Deprecated Tools
+              <span className="scanner-tab-count">{scanResult.deprecated_tools_count}</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('links')}
-              className={`pb-2 px-1 border-b-2 flex items-center gap-1.5 transition ${
-                activeTab === 'links'
-                  ? 'border-indigo-500 text-indigo-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-300'
-              }`}
+              className={`scanner-tab-btn ${activeTab === 'links' ? 'active' : ''}`}
             >
-              Links ({scanResult.broken_links_count} broken / {scanResult.links_checked_count} checked)
+              Hyperlinks
+              <span className="scanner-tab-count">
+                {scanResult.broken_links_count} broken / {scanResult.links_checked_count} checked
+              </span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('metadata')}
-              className={`pb-2 px-1 border-b-2 flex items-center gap-1.5 transition ${
-                activeTab === 'metadata'
-                  ? 'border-yellow-500 text-yellow-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-300'
-              }`}
+              className={`scanner-tab-btn ${activeTab === 'metadata' ? 'active' : ''}`}
             >
-              Metadata Quality ({scanResult.metadata_quality_issues_count})
+              Metadata Quality
+              <span className="scanner-tab-count">{scanResult.metadata_quality_issues_count}</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('text')}
-              className={`pb-2 px-1 border-b-2 flex items-center gap-1.5 transition ${
-                activeTab === 'text'
-                  ? 'border-slate-400 text-slate-200'
-                  : 'border-transparent text-slate-400 hover:text-slate-300'
-              }`}
+              className={`scanner-tab-btn ${activeTab === 'text' ? 'active' : ''}`}
             >
               Extracted Content
             </button>
           </div>
 
-          {/* Tab 1: Deprecated Tools */}
+          {/* Tab 1: Deprecated Tools Findings */}
           {activeTab === 'deprecated' && (
             <div>
               {scanResult.deprecated_tools.length === 0 ? (
-                <div className="p-4 text-center text-xs text-slate-400 bg-slate-950/40 rounded-lg border border-slate-800/60">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
-                  No deprecated tools detected. Document is clean of retired enterprise software mentions.
+                <div style={{ padding: '24px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.85rem' }}>
+                  <CheckCircle2 size={24} color="#10b981" style={{ margin: '0 auto 8px' }} />
+                  <strong>Clean of Deprecated Tools</strong>
+                  <p style={{ marginTop: 4, fontSize: '0.8rem' }}>No references to retired enterprise technologies or platforms were detected in the text.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div>
                   {scanResult.deprecated_tools.map((hit, idx) => (
-                    <div key={idx} className="p-3.5 bg-amber-950/20 border border-amber-800/40 rounded-lg text-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-amber-300 flex items-center gap-1.5">
-                          <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                    <div key={idx} className="scanner-finding-card warning">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem' }}>
+                          <ShieldAlert size={16} color="#d97706" />
                           {hit.tool_name}
                         </span>
-                        <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono text-[10px]">
-                          Matched: "{hit.matched_text}"
+                        <span style={{ padding: '2px 8px', borderRadius: 4, background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+                          Token match: "{hit.matched_text}"
                         </span>
                       </div>
-                      <div className="mt-2 text-slate-300 bg-slate-950/80 p-2.5 rounded font-mono text-[11px] border border-slate-800">
+                      <div className="scanner-finding-excerpt">
                         "...{hit.context_excerpt}..."
                       </div>
                       {hit.recommended_replacement && (
-                        <div className="mt-2 text-amber-400/90 text-[11px] flex items-center gap-1">
-                          <ArrowRight className="w-3 h-3 text-amber-400" />
-                          {hit.recommended_replacement}
+                        <div style={{ marginTop: 8, fontSize: '0.8rem', color: '#b45309', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <ArrowRight size={13} />
+                          <strong>Recommended action:</strong> {hit.recommended_replacement}
                         </div>
                       )}
                     </div>
@@ -408,27 +400,29 @@ export const LiveUrlScanner: React.FC<LiveUrlScannerProps> = ({ onDocumentImport
             </div>
           )}
 
-          {/* Tab 2: Links */}
+          {/* Tab 2: Hyperlinks */}
           {activeTab === 'links' && (
             <div>
               {scanResult.broken_links.length > 0 && (
-                <div className="mb-4 space-y-2">
-                  <h5 className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
-                    <XCircle className="w-3.5 h-3.5 text-rose-400" />
-                    Broken & Dead Hyperlinks ({scanResult.broken_links.length})
-                  </h5>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#e11d48', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <XCircle size={16} />
+                    Confirmed Broken or Blocked Hyperlinks ({scanResult.broken_links.length})
+                  </div>
                   {scanResult.broken_links.map((link, idx) => (
-                    <div key={idx} className="p-2.5 bg-rose-950/20 border border-rose-800/40 rounded-lg text-xs flex items-center justify-between gap-3">
-                      <div className="truncate">
-                        <span className="text-rose-300 font-mono text-[11px]">{link.url}</span>
+                    <div key={idx} className="scanner-finding-card danger" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#be123c', fontWeight: 600 }}>
+                          {link.url}
+                        </span>
                         {link.anchor_text && (
-                          <span className="text-slate-400 text-[10px] block truncate">
-                            Anchor: "{link.anchor_text}"
-                          </span>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 2 }}>
+                            Anchor label: "{link.anchor_text}"
+                          </div>
                         )}
                       </div>
-                      <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 font-mono text-[10px] whitespace-nowrap">
-                        {link.error || `HTTP ${link.status_code || 'Fail'}`}
+                      <span style={{ padding: '3px 8px', borderRadius: 6, background: '#ffe4e6', color: '#be123c', border: '1px solid #fecdd3', fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        {link.error || `HTTP ${link.status_code || 'Failed'}`}
                       </span>
                     </div>
                   ))}
@@ -436,15 +430,17 @@ export const LiveUrlScanner: React.FC<LiveUrlScannerProps> = ({ onDocumentImport
               )}
 
               {scanResult.live_links.length > 0 && (
-                <div className="space-y-2">
-                  <h5 className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    Live & Verified Hyperlinks ({scanResult.live_links.length})
-                  </h5>
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#059669', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <CheckCircle2 size={16} />
+                    Verified Live Hyperlinks ({scanResult.live_links.length})
+                  </div>
                   {scanResult.live_links.slice(0, 8).map((link, idx) => (
-                    <div key={idx} className="p-2 bg-slate-950/60 border border-slate-800/60 rounded-lg text-xs flex items-center justify-between gap-3">
-                      <span className="text-slate-300 font-mono text-[11px] truncate">{link.url}</span>
-                      <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono text-[10px]">
+                    <div key={idx} className="scanner-finding-card success" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {link.url}
+                      </span>
+                      <span style={{ padding: '2px 8px', borderRadius: 6, background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', fontSize: '0.75rem', fontWeight: 700 }}>
                         HTTP {link.status_code || 200}
                       </span>
                     </div>
@@ -453,8 +449,8 @@ export const LiveUrlScanner: React.FC<LiveUrlScannerProps> = ({ onDocumentImport
               )}
 
               {scanResult.broken_links.length === 0 && scanResult.live_links.length === 0 && (
-                <div className="p-4 text-center text-xs text-slate-400 bg-slate-950/40 rounded-lg border border-slate-800/60">
-                  No outgoing hyperlinks were detected on this webpage.
+                <div style={{ padding: '24px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.85rem' }}>
+                  No outgoing hyperlinks were found in this webpage.
                 </div>
               )}
             </div>
@@ -464,20 +460,23 @@ export const LiveUrlScanner: React.FC<LiveUrlScannerProps> = ({ onDocumentImport
           {activeTab === 'metadata' && (
             <div>
               {scanResult.metadata_quality_issues.length === 0 ? (
-                <div className="p-4 text-center text-xs text-slate-400 bg-slate-950/40 rounded-lg border border-slate-800/60">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
-                  Metadata is healthy. Document has valid title, author attributes, and dates.
+                <div style={{ padding: '24px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.85rem' }}>
+                  <CheckCircle2 size={24} color="#10b981" style={{ margin: '0 auto 8px' }} />
+                  <strong>Metadata is Complete &amp; Healthy</strong>
+                  <p style={{ marginTop: 4, fontSize: '0.8rem' }}>Document has valid title, author, and timestamp attributes.</p>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div>
                   {scanResult.metadata_quality_issues.map((issue, idx) => (
-                    <div key={idx} className="p-3 bg-yellow-950/20 border border-yellow-800/40 rounded-lg text-xs flex items-start gap-2.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-yellow-400 mt-0.5 flex-shrink-0" />
+                    <div key={idx} className="scanner-finding-card warning" style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                      <AlertTriangle size={16} color="#d97706" style={{ marginTop: 2, flexShrink: 0 }} />
                       <div>
-                        <span className="font-semibold text-yellow-300 uppercase tracking-wider text-[10px]">
+                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                           Field: {issue.field}
-                        </span>
-                        <p className="text-slate-200 mt-0.5">{issue.issue}</p>
+                        </div>
+                        <div style={{ fontSize: '0.82rem', color: '#334155', marginTop: 2 }}>
+                          {issue.issue}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -486,9 +485,9 @@ export const LiveUrlScanner: React.FC<LiveUrlScannerProps> = ({ onDocumentImport
             </div>
           )}
 
-          {/* Tab 4: Raw Text */}
+          {/* Tab 4: Extracted Content */}
           {activeTab === 'text' && (
-            <div className="bg-slate-950 p-3.5 rounded-lg border border-slate-800 text-xs font-mono text-slate-300 max-h-60 overflow-y-auto leading-relaxed">
+            <div className="scanner-code-preview">
               {scanResult.text_preview || 'No visible plain text could be extracted.'}
             </div>
           )}
