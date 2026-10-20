@@ -5,6 +5,7 @@ import { DashboardOverview } from '../components/DashboardOverview';
 import { ContentInventory } from '../components/ContentInventory';
 import { AuditFindings } from '../components/AuditFindings';
 import { EvidenceFindings } from '../components/EvidenceFindings';
+import { ContradictionDetection } from '../components/ContradictionDetection';
 import { DocumentDetailDrawer } from '../components/DocumentDetailDrawer';
 import { ScoreDetailDrawer } from '../components/ScoreDetailDrawer';
 import {
@@ -24,7 +25,7 @@ import {
 } from '../types';
 
 export const DashboardPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'audit' | 'evidence'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'audit' | 'evidence' | 'contradictions'>('dashboard');
   const [selectedDocument, setSelectedDocument] = useState<DocumentRecord | null>(null);
   const [selectedScoredDocument, setSelectedScoredDocument] = useState<ScoredDocument | null>(null);
 
@@ -114,9 +115,20 @@ export const DashboardPage: React.FC = () => {
             <AuditFindings
               onSelectScoredDocument={(scoredDoc) => setSelectedScoredDocument(scoredDoc)}
             />
-          ) : (
+          ) : activeTab === 'evidence' ? (
             <EvidenceFindings
               onSelectScoredDocument={(scoredDoc) => setSelectedScoredDocument(scoredDoc)}
+              onSelectDocumentId={async (docId) => {
+                try {
+                  const detail = await fetchAuditDocumentDetail(docId);
+                  setSelectedScoredDocument(detail);
+                } catch (e) {
+                  console.error('Failed to open document detail:', e);
+                }
+              }}
+            />
+          ) : (
+            <ContradictionDetection
               onSelectDocumentId={async (docId) => {
                 try {
                   const detail = await fetchAuditDocumentDetail(docId);

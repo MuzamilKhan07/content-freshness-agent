@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from backend.app.api.contradiction_routes import contradiction_router
 from backend.app.api.evidence_routes import router as evidence_router
 from backend.app.api.routes import router
 from backend.app.core.config import settings
@@ -36,7 +37,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -51,6 +52,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 app.include_router(router)
 app.include_router(evidence_router)
+app.include_router(contradiction_router)
 
 
 @app.get("/", tags=["Root"])

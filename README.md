@@ -128,6 +128,13 @@ npm run dev
 | `GET` | `/api/evidence/documents/{document_id}` | Detailed evidence items associated with a specific document |
 | `GET` | `/api/evidence/findings` | Paginated evidence findings with status, signal type, severity, and doc ID filters |
 | `GET` | `/api/evidence/audits/{audit_id}` | Real execution status, timestamps, and parameters of a specific audit |
+| `POST` | `/api/contradictions/audit` | Execute cross-document contradiction detection across candidate document pairs |
+| `GET` | `/api/contradictions` | Paginated contradiction findings with relationship, severity, status, and doc ID filters |
+| `GET` | `/api/contradictions/{contradiction_id}` | Full comparative finding detail (both claims, excerpts, reasoning, recency) |
+| `PATCH` | `/api/contradictions/{contradiction_id}/review` | Auditor review transition (confirm, dismiss, resolve) with score recalculation |
+| `GET` | `/api/contradictions/summary` | Aggregate contradiction metrics: pairs analyzed, active conflicts, review statuses |
+| `POST` | `/api/documents/{document_id}/content` | Ingest or update raw text content for an enterprise document |
+| `GET` | `/api/documents/{document_id}/content` | Retrieve stored text content and metadata for an enterprise document |
 
 ---
 
@@ -152,13 +159,46 @@ The **Evidence Collection Agent** is a multi-tool agentic workflow that gathers,
 
 ---
 
+## Phase 5: AI Contradiction Detection Agent & Cross-Document Reasoning
+
+The **Contradiction Detection Agent** performs semantic analysis across documents to identify conflicting policies, numerical discrepancies, and procedural divergence:
+
+1. **Candidate Selector (`CandidateSelector`)**:
+   - Bounded pairing strategy clustering documents by shared `subject_area` (Security, Finance, Product, IT, Data Science) or high title/topic affinity.
+   - Verifies text availability to prevent comparing records with missing content.
+2. **Claim Extractor (`ClaimExtractor`)**:
+   - Uses OpenAI API (`gpt-4o-mini` with structured JSON output) or deterministic syntactic sentence segmentation when API keys are not supplied.
+   - Classifies claims by type: `policy_rule`, `procedure_step`, `approval_requirement`, `numerical_limit`, `tool_requirement`.
+3. **Semantic Contradiction Analyzer (`SemanticContradictionAnalyzer`)**:
+   - Compares claims across candidate pairs.
+   - Categorizes relationship types:
+     - `contradiction`: Incompatible claims under the same conditions.
+     - `supersession`: Newer document explicitly replaces older guidance.
+     - `scope_difference`: Claims apply to different operational scopes (e.g. beta cohorts vs production).
+     - `complementary`: Compatible or additive guidance.
+     - `insufficient_evidence`: Text missing or inconclusive.
+   - Assesses recency and authority:
+     - `newer_document_likely_authoritative`
+     - `older_document_explicitly_superseded`
+     - `authority_unclear`
+     - `dates_unavailable`
+4. **Human Review Workflow & Freshness Scoring Integration**:
+   - New findings enter as `pending_review`.
+   - Auditors can **Confirm**, **Dismiss**, or mark **Resolved** via `PATCH /api/contradictions/{id}/review`.
+   - Confirmed contradictions directly update the Phase 3 scoring engine's 15-point contradiction signal, increasing risk scores and updating evidence coverage.
+   - Dismissed/resolved findings remove the active penalty while preserving full audit provenance.
+5. **Text Ingestion Service (`DocumentContentService`)**:
+   - Provides text storage and ingestion API for enterprise records, seeded with domain-specific benchmark test policies.
+
+---
+
 ## Running Automated Backend Tests
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 pytest -v
 ```
-All **36 automated tests** cover Phases 1–4 functionality:
+All **47 automated tests** cover Phases 1–5 functionality:
 - Age thresholds (&le;30, 31–90, 91–180, 181–365, >365 days).
 - Broken link scoring (clean, confirmed, missing).
 - Deprecated tool scoring (clean, confirmed, missing).
@@ -169,6 +209,14 @@ All **36 automated tests** cover Phases 1–4 functionality:
 - Safe public URL verification and redirect security.
 - Deprecated tool regex rules and false-positive boundaries.
 - Metadata quality checks and schema inconsistency detection.
-- Batch audit execution and error isolation (single doc failures don't crash batch).
+- Batch evidence audit execution and error isolation.
+- Candidate pair selection by subject area and content presence.
+- Structured claim extraction.
+- Procedural, numerical limit, and tool supersession contradiction detection.
+- Scope difference distinction.
+- Temporal recency and authority evaluation.
+- Contradiction review transitions and scoring recalculation.
+- Document text ingestion API.
 - Security checks confirming zero exposed API keys.
+
 

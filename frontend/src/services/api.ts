@@ -16,6 +16,11 @@ import {
   EvidenceDocumentResponse,
   EvidenceFindingListResponse,
   EvidenceAuditRecord,
+  ContradictionFinding,
+  ContradictionAuditRequest,
+  ContradictionSummaryResponse,
+  ContradictionListResponse,
+  ContradictionReviewRequest,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -206,4 +211,94 @@ export async function fetchEvidenceAuditRecord(auditId: string): Promise<Evidenc
   }
   return response.json();
 }
+
+// ---------------------------------------------------------
+// Phase 5 AI Contradiction Detection API
+// ---------------------------------------------------------
+
+export async function fetchContradictionsSummary(): Promise<ContradictionSummaryResponse> {
+  const response = await fetch(`${API_BASE_URL}/contradictions/summary`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch contradictions summary: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchContradictions(params: {
+  page?: number;
+  page_size?: number;
+  relationship_type?: string;
+  severity?: string;
+  status?: string;
+  document_id?: string;
+  subject_area?: string;
+} = {}): Promise<ContradictionListResponse> {
+  const url = new URL(`${window.location.origin}${API_BASE_URL}/contradictions`);
+  if (params.page !== undefined) url.searchParams.set('page', String(params.page));
+  if (params.page_size !== undefined) url.searchParams.set('page_size', String(params.page_size));
+  if (params.relationship_type && params.relationship_type !== 'all') url.searchParams.set('relationship_type', params.relationship_type);
+  if (params.severity && params.severity !== 'all') url.searchParams.set('severity', params.severity);
+  if (params.status && params.status !== 'all') url.searchParams.set('status', params.status);
+  if (params.document_id) url.searchParams.set('document_id', params.document_id);
+  if (params.subject_area && params.subject_area !== 'all') url.searchParams.set('subject_area', params.subject_area);
+
+  const response = await fetch(url.toString());
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch contradictions list: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchContradictionDetail(contradictionId: string): Promise<ContradictionFinding> {
+  const encodedId = encodeURIComponent(contradictionId.trim());
+  const response = await fetch(`${API_BASE_URL}/contradictions/${encodedId}`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch contradiction ${contradictionId}: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function triggerContradictionAudit(request: ContradictionAuditRequest = {}): Promise<ContradictionSummaryResponse> {
+  const response = await fetch(`${API_BASE_URL}/contradictions/audit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Contradiction audit failed: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function reviewContradiction(
+  contradictionId: string,
+  request: ContradictionReviewRequest
+): Promise<ContradictionFinding> {
+  const encodedId = encodeURIComponent(contradictionId.trim());
+  const response = await fetch(`${API_BASE_URL}/contradictions/${encodedId}/review`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to update contradiction review status: HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchDocumentContent(documentId: string): Promise<any> {
+  const encodedId = encodeURIComponent(documentId.trim());
+  const response = await fetch(`${API_BASE_URL}/documents/${encodedId}/content`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Content for ${documentId} not found`);
+  }
+  return response.json();
+}
+
 

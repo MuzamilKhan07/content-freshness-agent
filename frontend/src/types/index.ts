@@ -259,3 +259,91 @@ export interface EvidenceAuditRecord {
   total_evidence_produced: number;
 }
 
+// ---------------------------------------------------------
+// Phase 5 AI Contradiction Detection Models
+// ---------------------------------------------------------
+
+export type ContradictionRelationshipType =
+  | 'contradiction'
+  | 'supersession'
+  | 'complementary'
+  | 'scope_difference'
+  | 'insufficient_evidence';
+
+export type ContradictionSeverityType = 'critical' | 'high' | 'medium' | 'low';
+
+export type RecencyAssessmentType =
+  | 'newer_document_likely_authoritative'
+  | 'older_document_explicitly_superseded'
+  | 'authority_unclear'
+  | 'dates_unavailable';
+
+export type ContradictionReviewStatusType =
+  | 'pending_review'
+  | 'confirmed'
+  | 'dismissed'
+  | 'resolved';
+
+export interface ContradictionFinding {
+  contradiction_id: string;
+  audit_id: string;
+  document_a_id: string;
+  document_b_id: string;
+  document_a_title: string;
+  document_b_title: string;
+  claim_a: string;
+  claim_b: string;
+  relationship_type: ContradictionRelationshipType;
+  explanation: string;
+  supporting_excerpt_a: string;
+  supporting_excerpt_b: string;
+  source_location_a?: string | null;
+  source_location_b?: string | null;
+  severity: ContradictionSeverityType;
+  confidence: number;
+  recency_assessment: RecencyAssessmentType;
+  recommended_action: string;
+  status: ContradictionReviewStatusType;
+  review_note?: string | null;
+  reviewed_at?: string | null;
+  reviewed_by?: string | null;
+  detected_at: string;
+  subject_area?: string | null;
+  model_name?: string | null;
+}
+
+export interface ContradictionAuditRequest {
+  document_ids?: string[];
+  subject_area?: string;
+  max_comparisons?: number;
+  force_reanalysis?: boolean;
+}
+
+export interface ContradictionSummaryResponse {
+  total_pairs_analyzed: number;
+  total_findings: number;
+  confirmed_contradictions: number;
+  pending_review_findings: number;
+  dismissed_findings: number;
+  resolved_findings: number;
+  findings_by_severity: Record<string, number>;
+  documents_with_active_contradictions: number;
+  analysis_failures: number;
+  last_audit_timestamp?: string | null;
+}
+
+export interface ContradictionListResponse {
+  items: ContradictionFinding[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface ContradictionReviewRequest {
+  status: ContradictionReviewStatusType;
+  review_note?: string;
+  reviewed_by?: string;
+}
+
+

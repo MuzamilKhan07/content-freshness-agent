@@ -33,6 +33,7 @@ class ScoringService:
         self._cached_scored_docs: Optional[List[ScoredDocument]] = None
         self._cached_summary: Optional[AuditSummaryResponse] = None
         self._last_audit_time: Optional[str] = None
+        self._verified_contradictions: Dict[str, Any] = {}
 
     def evaluate_age_signal(self, row: Dict[str, Any]) -> SignalScoreDetail:
         """Evaluate document age risk (0-30 points)."""
@@ -421,8 +422,15 @@ class ScoringService:
             return "Collect missing telemetry: verify document update history and run link verification."
         return "Content verified fresh: maintain current guidance and schedule next periodic review."
 
-    def run_audit(self) -> Tuple[List[ScoredDocument], AuditSummaryResponse]:
+    def run_audit(
+        self,
+        force_refresh: bool = False,
+        verified_contradictions: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[List[ScoredDocument], AuditSummaryResponse]:
         """Execute full scoring audit over inventory dataset."""
+        if verified_contradictions is not None:
+            self._verified_contradictions = verified_contradictions
+
         df, _ = self._dataset_service.load_dataset()
         now_iso = datetime.now(timezone.utc).isoformat()
 
@@ -469,7 +477,7 @@ class ScoringService:
         scored_count = 0
 
         for r in records:
-            doc = self.score_document(r)
+            doc = self.score_document(r, verified_contradictions=self._verified_contradictions)
             scored_list.append(doc)
 
             risk_dist[doc.risk_level.value] = risk_dist.get(doc.risk_level.value, 0) + 1

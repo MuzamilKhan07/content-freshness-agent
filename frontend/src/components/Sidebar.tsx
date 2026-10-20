@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'inventory' | 'audit' | 'evidence';
-  onSelectTab: (tab: 'dashboard' | 'inventory' | 'audit' | 'evidence') => void;
+  activeTab: 'dashboard' | 'inventory' | 'audit' | 'evidence' | 'contradictions';
+  onSelectTab: (tab: 'dashboard' | 'inventory' | 'audit' | 'evidence' | 'contradictions') => void;
   totalRecords?: number;
 }
 
@@ -107,16 +107,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </span>
         </button>
 
-        <div className="nav-section-title" style={{ marginTop: 14 }}>
-          Intelligence (Upcoming)
-        </div>
-
-        <div className="nav-item disabled" title="Available in Phase 5: Semantic Contradictions">
+        <button
+          className={`nav-item ${activeTab === 'contradictions' ? 'active' : ''}`}
+          id="nav-contradictions"
+          onClick={() => onSelectTab('contradictions')}
+        >
           <div className="nav-item-left">
             <GitCompare size={18} />
             <span>Contradictions</span>
           </div>
-          <span className="nav-badge-upcoming">Phase 5</span>
+          <span
+            className="card-badge"
+            style={{
+              backgroundColor: activeTab === 'contradictions' ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.1)',
+              color: activeTab === 'contradictions' ? '#ffffff' : '#6366f1',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+            }}
+          >
+            Phase 5
+          </span>
+        </button>
+
+        <div className="nav-section-title" style={{ marginTop: 14 }}>
+          Autonomous Action (Upcoming)
         </div>
 
         <div className="nav-item disabled" title="Available in Phase 6: Autonomous Remediation">

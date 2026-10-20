@@ -2,7 +2,7 @@ import React from 'react';
 import { RefreshCw, Server, AlertCircle } from 'lucide-react';
 
 interface TopBarProps {
-  activeTab: 'dashboard' | 'inventory' | 'audit' | 'evidence';
+  activeTab: 'dashboard' | 'inventory' | 'audit' | 'evidence' | 'contradictions';
   backendOnline: boolean | null;
   isRefreshing: boolean;
   onRefresh: () => void;
@@ -37,6 +37,11 @@ export const TopBar: React.FC<TopBarProps> = ({
         return {
           title: 'Evidence Collection Agent & Content Verification',
           subtitle: 'Autonomous verification agent collecting traceable, SSRF-safe signals and updating risk scores',
+        };
+      case 'contradictions':
+        return {
+          title: 'AI Contradiction Detection Agent & Cross-Document Reasoning',
+          subtitle: 'Extract claims, detect procedural conflicts, assess supersession, and review semantic contradictions',
         };
     }
   };
